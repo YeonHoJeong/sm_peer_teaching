@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+    <title>Analyze Sample</title>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="js/d3.layout.cloud.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+    <script src="js/graph.js"></script>
+</head>
+<body>
+
+<script type="text/javascript">
+    function processImage() {
+        var subscriptionKey = "서비스 구독키";   /*서비스 구독키*/
+
+        var uriBase =
+            "https://westcentralus.api.cognitive.microsoft.com/vision/v2.0/analyze";
+
+        // Request parameters.
+        var params = {
+            "visualFeatures": "Categories,Description,Color",
+            "details": "",
+            "language": "en",
+        };
+
+        // 이미지를 보여줌
+        var sourceImageUrl = document.getElementById("inputImage").value;   //이미지 주소를 작성한 input의 value를 sourceImageUrl에 대입
+        document.querySelector("#sourceImage").src = sourceImageUrl;    // id가 sourceImage인 요소의 src에 sourceImageUrl 을 대입
+        //결론적으로 id가 sourceImage인 img태그에 src로 이미지 주소가 대입되어서, 이미지가 계속 바뀜
+
+        /*API를 하기 위한 함수 Ajax*/
+        $.ajax({
+            url: uriBase + "?" + $.param(params),
+
+            // Request headers.
+            beforeSend: function(xhrObj){
+                xhrObj.setRequestHeader("Content-Type","application/json");
+                xhrObj.setRequestHeader(
+                    "Ocp-Apim-Subscription-Key", subscriptionKey); /*Azure에서 요구하는 구독 키 값*/
+            },
+
+            type: "POST",
+
+            // Request body.
+            data: '{"url": ' + '"' + sourceImageUrl + '"}', /*http 요청 body 부분에 이미지 url을 보내준다.*/
+        })
+
+            .done(function(data) {
+                // data : 응답받은 JSON 객체
+                // 응답받은 JSON객체를 String으로 변환해서 화면에 뿌려줌
+                $("#responseTextArea").val(JSON.stringify(data, null, 2));
+                ConvertDataAndStart(data);
+            })
+
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                // 에러 메시지 출력
+                var errorString = (errorThrown === "") ? "Error. " :
+                    errorThrown + " (" + jqXHR.status + "): ";
+                errorString += (jqXHR.responseText === "") ? "" :
+                    jQuery.parseJSON(jqXHR.responseText).message;
+                alert(errorString);
+            });
+    };
+</script>
+
+<h1>Azure Computer Vision API 예제:</h1>
+이미지 URL 주소를 입력해주시고 <strong>인식</strong> 버튼을 눌러주세요.
+<br><br>
+이미지 주소:
+<input type="text" name="inputImage" id="inputImage"
+       value="http://upload.wikimedia.org/wikipedia/commons/3/3c/Shaki_waterfall.jpg" />
+<button onclick="processImage()">인식</button>
+<br><br>
+<div id="wrapper" style="width:1020px; display:table;">
+    <div id="jsonOutput" style="width:600px; display:table-cell;">
+        Response:
+        <br><br>
+        <textarea id="responseTextArea" class="UIInput"
+                  style="width:580px; height:400px;"></textarea>
+    </div>
+    <div id="imageDiv" style="width:420px; display:table-cell;">
+        Source image:
+        <br><br>
+        <img id="sourceImage" width="400" />
+    </div>
+
+</div>
+</body>
+</html>
